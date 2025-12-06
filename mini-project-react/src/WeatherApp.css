@@ -1,0 +1,9 @@
+.WeatherApp {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;   /* vertically center */
+  align-items: center;       /* horizontally center */
+  min-height: 100vh;         /* pura screen ka height le */
+  text-align: center;
+
+}

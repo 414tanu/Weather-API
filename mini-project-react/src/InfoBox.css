@@ -1,0 +1,21 @@
+/* .InfoBox {
+  text-align: center;
+}
+
+.cardContainer {
+  display: flex;
+  justify-content: center;
+} */
+
+.InfoBox {
+  display: flex;
+  justify-content: center;  /* horizontally center */
+  align-items: center;      /* vertically center */
+  min-height: 80vh;         /* screen ke beech me laye */
+  text-align: center;
+}
+
+.cardContainer {
+  display: flex;
+  justify-content: center;
+}
