@@ -3,7 +3,31 @@
   flex-direction: column;
   justify-content: center;   /* vertically center */
   align-items: center;       /* horizontally center */
-  min-height: 100vh;         /* pura screen ka height le */
-  text-align: center;
-
+  text-align: center; 
+  transition: all 0.5s ease-in-out;
+  border-radius: 12px;
+  padding: 40px 20px;
 }
+
+/* Dynamic Backgrounds */
+.weather-hot {
+  background: linear-gradient(135deg, #ff9966, #ff5e62) !important;
+  color: white !important;
+}
+
+.weather-cold {
+  background: linear-gradient(135deg, #83a4d4, #b6fbff) !important;
+  color: #2c3e50 !important;
+}
+
+.weather-rain {
+  background: linear-gradient(135deg, #4b79a1, #283e51) !important;
+  color: white !important;
+}
+
+.weather-default {
+  background: linear-gradient(135deg, #a8caba, #5d4157) !important;
+  color: white !important;
+} 
+
+
