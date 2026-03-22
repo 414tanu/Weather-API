@@ -4,30 +4,23 @@
   justify-content: center;   /* vertically center */
   align-items: center;       /* horizontally center */
   text-align: center; 
-  transition: all 0.5s ease-in-out;
-  border-radius: 12px;
   padding: 40px 20px;
+  min-height: 100vh;
+  width: 100vw;
+  box-sizing: border-box;
 }
 
-/* Dynamic Backgrounds */
-.weather-hot {
-  background: linear-gradient(135deg, #ff9966, #ff5e62) !important;
-  color: white !important;
+/* Glassmorphism utility */
+.glass-card {
+  background: rgba(255, 255, 255, 0.4) !important; /* Increased opacity */
+  backdrop-filter: blur(20px) !important;        /* Increased blur */
+  -webkit-backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+  box-shadow: 0 10px 40px 0 rgba(0, 0, 0, 0.5) !important; /* Deeper shadow */
+  border-radius: 20px !important;
+  color: #1a1a2e !important; /* Very dark text inside the light glass */
 }
 
-.weather-cold {
-  background: linear-gradient(135deg, #83a4d4, #b6fbff) !important;
+.glass-card * {
   color: #2c3e50 !important;
 }
-
-.weather-rain {
-  background: linear-gradient(135deg, #4b79a1, #283e51) !important;
-  color: white !important;
-}
-
-.weather-default {
-  background: linear-gradient(135deg, #a8caba, #5d4157) !important;
-  color: white !important;
-} 
-
-

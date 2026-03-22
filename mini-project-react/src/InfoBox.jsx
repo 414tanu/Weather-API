@@ -64,8 +64,11 @@ import WbSunnyIcon from "@mui/icons-material/WbSunny";
 import ThunderstormIcon from "@mui/icons-material/Thunderstorm";
 import CloudIcon from "@mui/icons-material/Cloud";
 import { motion } from "framer-motion";
+import WeatherInsights from "./WeatherInsights";
+import Forecast from "./Forecast";
+import WeatherMap from "./WeatherMap";
 
-export default function InfoBox({ info, bgClass }) {
+export default function InfoBox({ info }) {
   // Safe and working URLs from Unsplash
   const INIT_URL = "https://images.unsplash.com/photo-1610907647583-34a4d20ab15a?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NTV8fGR1c2t5JTIwd2VhdGhlcnxlbnwwfHwwfHx8MA%3D%3D";
   const HOT_URL = "https://images.unsplash.com/photo-1447601932606-2b63e2e64331?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8N3x8aG90JTIwd2VhdGhlcnxlbnwwfHwwfHx8MA%3D%3D";
@@ -102,12 +105,8 @@ export default function InfoBox({ info, bgClass }) {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
       >
-        <Card className={bgClass} sx={{ 
+        <Card className="glass-card" sx={{ 
           width: 350, 
-          backdropFilter: 'blur(15px)', 
-          border: '1px solid rgba(255, 255, 255, 0.2)', 
-          boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.3)',
-          borderRadius: 4,
           overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column'
@@ -138,6 +137,10 @@ export default function InfoBox({ info, bgClass }) {
                 {info.visibility && <div>👁️ Vis: <b>{info.visibility} km</b></div>}
               </div>
             </Typography>
+
+            <WeatherInsights info={info} />
+            <Forecast city={info.city} />
+            <WeatherMap lat={info.lat} lon={info.lon} city={info.city} />
           </CardContent>
         </Card>
       </motion.div>

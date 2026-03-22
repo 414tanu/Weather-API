@@ -73,19 +73,24 @@
 
 
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
+import CircularProgress from '@mui/material/CircularProgress';
+import Alert from '@mui/material/Alert';
+import AlertTitle from '@mui/material/AlertTitle';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import SearchIcon from '@mui/icons-material/Search';
 import HistoryIcon from '@mui/icons-material/History';
+import debounce from 'lodash.debounce';
 import "./SearchBox.css";
 
-export default function SearchBox({ updateInfo, bgClass }) {
+export default function SearchBox({ updateInfo }) {
   let [city, setCity] = useState("");
   let [error, setError] = useState(false);
   let [loadingLocation, setLoadingLocation] = useState(false);
+  let [loading, setLoading] = useState(false);
   let [recentSearches, setRecentSearches] = useState([]);
 
   const API_URL = "https://api.openweathermap.org/data/2.5/weather";
@@ -99,6 +104,12 @@ export default function SearchBox({ updateInfo, bgClass }) {
 
   const saveToRecentSearches = (cityName) => {
     let updatedSearches = [cityName, ...recentSearches.filter(c => c !== cityName)].slice(0, 5);
+    setRecentSearches(updatedSearches);
+    localStorage.setItem('weatherRecentSearches', JSON.stringify(updatedSearches));
+  };
+
+  const handleDeleteSearch = (cityName) => {
+    let updatedSearches = recentSearches.filter(c => c !== cityName);
     setRecentSearches(updatedSearches);
     localStorage.setItem('weatherRecentSearches', JSON.stringify(updatedSearches));
   };
@@ -120,6 +131,8 @@ export default function SearchBox({ updateInfo, bgClass }) {
 
     let result = {
       city: jsonResponse.name,
+      lat: jsonResponse.coord.lat,
+      lon: jsonResponse.coord.lon,
       temp: jsonResponse.main.temp,
       tempMin: jsonResponse.main.temp_min,
       tempMax: jsonResponse.main.temp_max,
@@ -136,13 +149,39 @@ export default function SearchBox({ updateInfo, bgClass }) {
     return result;
   };
 
+  // Debounced search function
+  const debouncedSearch = useCallback(
+    debounce(async (searchCity) => {
+      if (!searchCity.trim()) return;
+      setLoading(true);
+      try {
+        let newInfo = await getWeatherInfo("city", searchCity);
+        updateInfo(newInfo);
+        saveToRecentSearches(newInfo.city);
+        setError(false);
+      } catch (err) {
+        console.error(err);
+        setError(true);
+      } finally {
+        setLoading(false);
+      }
+    }, 1000),
+    []
+  );
+
   let handleChange = (evt) => {
     setCity(evt.target.value);
+    debouncedSearch(evt.target.value);
   };
 
   let handleSubmit = async (evt) => {
     if(evt) evt.preventDefault();
     if (!city.trim()) return;
+    
+    // Cancel the debounced call since we are manually submitting
+    debouncedSearch.cancel();
+    
+    setLoading(true);
     try {
       let newInfo = await getWeatherInfo("city", city);
       updateInfo(newInfo);
@@ -152,10 +191,13 @@ export default function SearchBox({ updateInfo, bgClass }) {
     } catch (err) {
       console.error(err);
       setError(true);
+    } finally {
+      setLoading(false);
     }
   };
 
   let handleHistoryClick = async (pastCity) => {
+    setLoading(true);
     try {
       let newInfo = await getWeatherInfo("city", pastCity);
       updateInfo(newInfo);
@@ -164,6 +206,8 @@ export default function SearchBox({ updateInfo, bgClass }) {
     } catch (err) {
       console.error(err);
       setError(true);
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -195,7 +239,7 @@ export default function SearchBox({ updateInfo, bgClass }) {
   };
 
   return (
-    <div className="SearchBox">
+    <div className="SearchBox glass-card">
       <form className="search-form" onSubmit={handleSubmit}>
         <TextField
           id="city"
@@ -209,11 +253,12 @@ export default function SearchBox({ updateInfo, bgClass }) {
         <Button 
           variant="contained" 
           type="submit" 
-          sx={{ ml: 2 }} 
-          startIcon={<SearchIcon />}
+          sx={{ ml: 2, minWidth: '110px' }} 
+          startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <SearchIcon />}
           color="primary"
+          disabled={loading}
         >
-          Search
+          {loading ? "..." : "Search"}
         </Button>
       </form>
       
@@ -229,7 +274,12 @@ export default function SearchBox({ updateInfo, bgClass }) {
         </Button>
       </div>
 
-      {error && <p style={{ color: "red" }}>No such place exists!</p>}
+      {error && (
+        <Alert severity="error" sx={{ mb: 2, textAlign: 'left', backgroundColor: 'rgba(253, 237, 237, 0.9)' }}>
+          <AlertTitle>Error</AlertTitle>
+          City not found. Please try again.
+        </Alert>
+      )}
 
       {recentSearches.length > 0 && (
         <div className="recent-searches">
@@ -240,9 +290,10 @@ export default function SearchBox({ updateInfo, bgClass }) {
                 key={index} 
                 label={search} 
                 onClick={() => handleHistoryClick(search)} 
+                onDelete={() => handleDeleteSearch(search)}
                 variant="outlined" 
                 clickable 
-                sx={{ m: 0.5, color: '#2c3e50', borderColor: '#c1c7d0' }} 
+                sx={{ m: 0.5, color: 'inherit', borderColor: 'rgba(255,255,255,0.4)', backgroundColor: 'rgba(255,255,255,0.1)' }} 
               />
             ))}
           </div>
