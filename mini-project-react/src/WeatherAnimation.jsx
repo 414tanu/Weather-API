@@ -1,10 +1,9 @@
 import Lottie from "lottie-react";
-import clearAnimation from "./animations/clear.json";
-import snowAnimation from "./animations/snow.json";
 
 // High-quality Lottie URLs for other weather types (3D style)
-const CLOUDS_URL = "https://fonts.gstatic.com/s/i/short-term/release/googlestandardsymbols/cloudy/default/24px.svg"; // Fallback to SVG if needed, but we want Lottie
 const LOTTIE_URLS = {
+  clear: "https://assets5.lottiefiles.com/packages/lf20_U1tpOq.json",
+  snow: "https://assets5.lottiefiles.com/packages/lf20_rhbzpten.json",
   clouds: "https://assets5.lottiefiles.com/packages/lf20_pw9i61of.json",
   rain: "https://assets5.lottiefiles.com/packages/lf20_b9puvvpx.json",
   thunder: "https://assets5.lottiefiles.com/packages/lf20_C697Ab.json",
@@ -15,13 +14,12 @@ const LOTTIE_URLS = {
 export default function WeatherAnimation({ weatherType, temp, humidity }) {
   const type = weatherType ? weatherType.toLowerCase() : "";
 
-  let animationData = null;
   let animationURL = null;
 
   if (type.includes("clear") || (type === "" && temp > 25)) {
-    animationData = clearAnimation;
+    animationURL = LOTTIE_URLS.clear;
   } else if (type.includes("snow")) {
-    animationData = snowAnimation;
+    animationURL = LOTTIE_URLS.snow;
   } else if (type.includes("rain") || type.includes("drizzle")) {
     animationURL = LOTTIE_URLS.rain;
   } else if (type.includes("thunder")) {
@@ -37,11 +35,7 @@ export default function WeatherAnimation({ weatherType, temp, humidity }) {
 
   return (
     <div style={{ width: "100%", height: "180px", display: "flex", justifyContent: "center", alignItems: "center", overflow: "hidden" }}>
-      {animationData ? (
-        <Lottie animationData={animationData} loop={true} style={{ height: "100%" }} />
-      ) : (
-        <Lottie path={animationURL} loop={true} style={{ height: "100%" }} />
-      )}
+      <Lottie path={animationURL} loop={true} style={{ height: "100%" }} />
     </div>
   );
 }
