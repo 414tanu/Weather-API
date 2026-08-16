@@ -145,6 +145,7 @@ export default function SearchBox({ updateInfo }) {
       visibility: jsonResponse.visibility / 1000, // convert to km
       sunrise: jsonResponse.sys.sunrise,
       sunset: jsonResponse.sys.sunset,
+      timezone: jsonResponse.timezone,
     };
     return result;
   };
@@ -242,8 +243,8 @@ export default function SearchBox({ updateInfo }) {
     <div className="SearchBox glass-card">
       <form className="search-form" onSubmit={handleSubmit}>
         <TextField
-          id="city"
-          label="City Name"
+          id="location"
+          label="Search Location"
           variant="outlined"
           required
           value={city}

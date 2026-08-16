@@ -20,6 +20,7 @@ export default function WeatherApp() {
     visibility: 10,
     sunrise: 1670000000,
     sunset: 1670040000,
+    timezone: 3600,
   });
 
   let updateInfo = (newInfo) => {
@@ -37,15 +38,36 @@ export default function WeatherApp() {
     bgClass = "bg-sun";
   }
 
+  const getLocalTimeDetails = () => {
+    if (weatherInfo.timezone === undefined) return { timeOfDay: 'day', timeStr: '' };
+    
+    const utcTime = new Date().getTime() + (new Date().getTimezoneOffset() * 60000);
+    const localTime = new Date(utcTime + (weatherInfo.timezone * 1000));
+    const hours = localTime.getHours();
+    
+    let timeOfDay = "";
+    if (hours >= 5 && hours < 12) timeOfDay = "Morning";
+    else if (hours >= 12 && hours < 17) timeOfDay = "Afternoon";
+    else if (hours >= 17 && hours < 20) timeOfDay = "Evening";
+    else timeOfDay = "Night";
+
+    return {
+      timeOfDay: timeOfDay,
+      timeStr: localTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+  };
+
+  const timeDetails = getLocalTimeDetails();
+
   return (
     <div className="WeatherApp">
-      <Background weatherType={weatherInfo.weather} />
+      <Background weatherType={weatherInfo.weather} timeOfDay={timeDetails.timeOfDay} />
       <h2 style={{ marginBottom: "30px", fontSize: "2.5rem", fontWeight: "800", color: "#fff", position: 'relative', zIndex: 10 }}>WeatheRate</h2>
       <Box sx={{ position: 'relative', zIndex: 10 }}>
         <SearchBox updateInfo={updateInfo} />
       </Box>
       <Box sx={{ position: 'relative', zIndex: 10 }}>
-        <InfoBox info={weatherInfo} />
+        <InfoBox info={weatherInfo} timeDetails={timeDetails} />
       </Box>
     </div>
   )

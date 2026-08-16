@@ -10,17 +10,23 @@
   box-sizing: border-box;
 }
 
-/* Glassmorphism utility */
-.glass-card {
-  background: rgba(255, 255, 255, 0.4) !important; /* Increased opacity */
-  backdrop-filter: blur(20px) !important;        /* Increased blur */
-  -webkit-backdrop-filter: blur(20px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.5) !important;
-  box-shadow: 0 10px 40px 0 rgba(0, 0, 0, 0.5) !important; /* Deeper shadow */
-  border-radius: 20px !important;
-  color: #1a1a2e !important; /* Very dark text inside the light glass */
+.WeatherApp h2 {
+  font-family: 'Outfit', sans-serif;
+  letter-spacing: -1px;
+  background: linear-gradient(135deg, #fff 0%, #ffb347 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5));
+  margin-bottom: 40px !important;
 }
 
-.glass-card * {
-  color: #2c3e50 !important;
+/* Glassmorphism utility - updated to be more premium */
+.glass-card {
+  background: rgba(255, 255, 255, 0.05) !important;
+  backdrop-filter: blur(25px) saturate(200%) !important;
+  -webkit-backdrop-filter: blur(25px) saturate(200%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8) !important;
+  border-radius: 24px !important;
 }

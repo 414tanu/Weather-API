@@ -57,7 +57,6 @@
 
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
-import CardMedia from "@mui/material/CardMedia";
 import Typography from "@mui/material/Typography";
 import "./InfoBox.css";
 import WbSunnyIcon from "@mui/icons-material/WbSunny";
@@ -67,33 +66,15 @@ import { motion } from "framer-motion";
 import WeatherInsights from "./WeatherInsights";
 import Forecast from "./Forecast";
 import WeatherMap from "./WeatherMap";
+import WeatherAnimation from "./WeatherAnimation";
 
-export default function InfoBox({ info }) {
-  // Safe and working URLs from Unsplash
-  const INIT_URL = "https://images.unsplash.com/photo-1610907647583-34a4d20ab15a?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NTV8fGR1c2t5JTIwd2VhdGhlcnxlbnwwfHwwfHx8MA%3D%3D";
-  const HOT_URL = "https://images.unsplash.com/photo-1447601932606-2b63e2e64331?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8N3x8aG90JTIwd2VhdGhlcnxlbnwwfHwwfHx8MA%3D%3D";
-  const COLD_URL = "https://plus.unsplash.com/premium_photo-1661769737901-04648e2c9992?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTd8fGNvbGQlMjB3ZWF0aGVyfGVufDB8fDB8fHww";
-  const RAIN_URL = "https://images.unsplash.com/photo-1737472794232-4c8be24ba535?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mzh8fHJhaW55JTIwd2VhdGhlcnxlbnwwfHwwfHx8MA%3D%3D";
-
-  // Determine Image Mapping
+export default function InfoBox({ info, timeDetails }) {
+  // Determine the appropriate icon for the title
   const weatherType = info.weather ? info.weather.toLowerCase() : "";
-  let imageUrl = INIT_URL;
-
-  if (weatherType.includes("rain") || weatherType.includes("drizzle") || weatherType.includes("thunderstorm")) {
-    imageUrl = RAIN_URL;
-  } else if (info.humidity > 80) {
-    imageUrl = RAIN_URL;
-  } else if (info.temp > 15) {
-    imageUrl = HOT_URL;
-  } else {
-    imageUrl = COLD_URL;
-  }
-
-  // Choose the appropriate icon
   let WeatherIcon = CloudIcon;
-  if (info.humidity > 80 || weatherType.includes("rain")) {
+  if (info.humidity > 80 || weatherType.includes("rain") || weatherType.includes("thunder")) {
     WeatherIcon = ThunderstormIcon;
-  } else if (info.temp > 15) {
+  } else if (info.temp > 15 || weatherType.includes("clear") || weatherType.includes("sun")) {
     WeatherIcon = WbSunnyIcon;
   }
 
@@ -101,46 +82,57 @@ export default function InfoBox({ info }) {
     <div className="InfoBox">
       <motion.div
         className="cardContainer"
-        initial={{ opacity: 0, y: -50 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8 }}
+        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ duration: 0.8, ease: "easeOut" }}
       >
         <Card className="glass-card" sx={{ 
-          width: 350, 
+          width: 380, 
           overflow: 'hidden',
           display: 'flex',
-          flexDirection: 'column'
+          flexDirection: 'column',
+          background: 'transparent', // Let CSS handle glassmorphism
+          boxShadow: 'none',
+          color: '#fff'
         }}>
-          <CardMedia
-            component="img"
-            height="180"
-            image={imageUrl}
-            alt="weather condition"
-          />
+          {/* Dynamic Weather Animation instead of static photo */}
+          <div className="animation-container">
+            <WeatherAnimation 
+              weatherType={info.weather} 
+              temp={info.temp} 
+              humidity={info.humidity} 
+            />
+          </div>
 
-          <CardContent sx={{ flexGrow: 1 }}>
-            <Typography gutterBottom variant="h4" component="div" sx={{ fontWeight: 'bold', color: 'inherit' }}>
-              {info.city} <WeatherIcon fontSize="large" sx={{ verticalAlign: 'middle', mb: 1 }}/>
+          <CardContent sx={{ flexGrow: 1, p: 3 }}>
+            {timeDetails && timeDetails.timeStr && (
+              <Typography variant="subtitle1" sx={{ textAlign: 'center', opacity: 0.8, mb: -1 }}>
+                Good {timeDetails.timeOfDay} • Local Time: {timeDetails.timeStr}
+              </Typography>
+            )}
+            <Typography gutterBottom variant="h4" component="div" sx={{ fontWeight: '800', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2, mt: 1 }}>
+              {info.city} <WeatherIcon fontSize="large" sx={{ color: '#ffb347' }}/>
             </Typography>
 
-            <Typography variant="body1" component={'div'} sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 1, color: 'inherit' }}>
-              <div style={{ fontSize: '2.5rem', fontWeight: 'bold', margin: '10px 0' }}>{Math.round(info.temp)}&deg;C</div>
-              <p style={{ textTransform: 'capitalize', fontSize: '1.2rem', fontStyle: 'italic', margin: 0 }}>
+            <Typography variant="body1" component={'div'} sx={{ mt: 1, textAlign: 'center' }}>
+              <div className="temp-display">{Math.round(info.temp)}&deg;C</div>
+              <p className="weather-desc">
                 {info.description || info.weather}
               </p>
               
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px', justifyContent: 'center', marginTop: '20px', fontSize: '0.9rem' }}>
-                <div>💧 Humidity: <b>{info.humidity}%</b></div>
-                <div>🌡️ Feels Like: <b>{Math.round(info.feelslike)}&deg;C</b></div>
-                {info.windSpeed && <div>💨 Wind: <b>{info.windSpeed} m/s</b></div>}
-                {info.pressure && <div>🧭 Pressure: <b>{info.pressure} hPa</b></div>}
-                {info.visibility && <div>👁️ Vis: <b>{info.visibility} km</b></div>}
+              <div className="weather-stats-grid">
+                <div className="stat-pill">💧 {info.humidity}%</div>
+                <div className="stat-pill">🌡️ {Math.round(info.feelslike)}&deg;C</div>
+                {info.windSpeed && <div className="stat-pill">💨 {info.windSpeed}m/s</div>}
+                {info.pressure && <div className="stat-pill">🧭 {info.pressure}hPa</div>}
               </div>
             </Typography>
 
-            <WeatherInsights info={info} />
-            <Forecast city={info.city} />
-            <WeatherMap lat={info.lat} lon={info.lon} city={info.city} />
+            <Box sx={{ mt: 3 }}>
+              <WeatherInsights info={info} />
+              <Forecast city={info.city} />
+              <WeatherMap lat={info.lat} lon={info.lon} city={info.city} />
+            </Box>
           </CardContent>
         </Card>
       </motion.div>

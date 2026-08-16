@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import NET from "vanta/dist/vanta.net.min";
 
-export default function Background({ weatherType }) {
+export default function Background({ weatherType, timeOfDay }) {
   const vantaRef = useRef(null);
   const [vantaEffect, setVantaEffect] = useState(null);
 
@@ -15,10 +15,25 @@ export default function Background({ weatherType }) {
   };
 
   const getTheme = () => {
-    if (weatherType.includes("rain") || weatherType.includes("drizzle") || weatherType.includes("thunder")) return colors.rain;
-    if (weatherType.includes("cloud")) return colors.cloudy;
-    if (weatherType.includes("clear") || weatherType.includes("sunny")) return colors.sun;
-    return colors.default;
+    let theme = colors.default;
+    if (weatherType.includes("rain") || weatherType.includes("drizzle") || weatherType.includes("thunder")) {
+      theme = colors.rain;
+    } else if (weatherType.includes("cloud")) {
+      theme = colors.cloudy;
+    } else if (weatherType.includes("clear") || weatherType.includes("sunny")) {
+      theme = colors.sun;
+    }
+
+    // Adjust background color slightly based on time of day
+    if (timeOfDay === "Night") {
+      return { color: theme.color, backgroundColor: 0x0a0a14 }; // Darker at night
+    } else if (timeOfDay === "Evening") {
+      return { color: theme.color, backgroundColor: 0x1f1a24 }; // Evening hues
+    } else if (timeOfDay === "Morning" || timeOfDay === "Afternoon") {
+      return { color: theme.color, backgroundColor: 0x3a4a5a }; // Lighter in the day
+    }
+
+    return theme;
   };
 
   const theme = getTheme();
@@ -66,7 +81,7 @@ export default function Background({ weatherType }) {
             width: "100%", 
             height: "100vh", 
             zIndex: -1,
-            filter: 'blur(3px)', /* Added subtle blur for depth */
+            filter: 'blur(50px)', /* Increased blur for a softer, more premium look */
             transition: 'all 1s ease'
         }} 
     />
