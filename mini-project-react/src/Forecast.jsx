@@ -4,38 +4,49 @@ import Typography from '@mui/material/Typography';
 import CircularProgress from '@mui/material/CircularProgress';
 import WeatherChart from './WeatherChart';
 
-export default function Forecast({ city }) {
+export default function Forecast({ city, lat, lon }) {
   const [forecast, setForecast] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
 
   const API_URL = "https://api.openweathermap.org/data/2.5/forecast";
-  const API_KEY = "aa2cf8819475d67e138795bdba57a945"; // replace if needed
+  const API_KEY = import.meta.env.VITE_OPENWEATHER_API_KEY;
+  if (!API_KEY) console.warn('VITE_OPENWEATHER_API_KEY is not set. Forecast will fail without it.');
 
   useEffect(() => {
-    if (!city) return;
+    if (!city && (lat === undefined || lon === undefined)) return;
 
     const getForecast = async () => {
       setLoading(true);
       setError(false);
       try {
-        let response = await fetch(`${API_URL}?q=${city}&appid=${API_KEY}&units=metric`);
+        let query = '';
+        if (lat !== undefined && lon !== undefined) {
+          query = `lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}`;
+        } else {
+          // If city contains a country code like "City, CC", use as-is; otherwise encode
+          query = `q=${encodeURIComponent(city)}`;
+        }
+
+        let response = await fetch(`${API_URL}?${query}&appid=${API_KEY}&units=metric`);
         let jsonResponse = await response.json();
-        
-        if (jsonResponse.cod !== "200") {
-          throw new Error(jsonResponse.message);
+
+        // cod can be string or number depending on endpoint
+        if (jsonResponse.cod && String(jsonResponse.cod) !== "200") {
+          throw new Error(jsonResponse.message || 'Failed to fetch forecast');
         }
 
         const dailyData = [];
         const seenDates = new Set();
-        
+
         jsonResponse.list.forEach(item => {
-          const date = new Date(item.dt * 1000).toLocaleDateString();
+          const dateObj = new Date(item.dt * 1000);
+          const date = dateObj.toLocaleDateString();
           if (!seenDates.has(date) && seenDates.size < 5) {
              seenDates.add(date);
              dailyData.push({
                date: date,
-               day: new Date(item.dt * 1000).toLocaleDateString('en-US', { weekday: 'short' }),
+               day: dateObj.toLocaleDateString('en-US', { weekday: 'short' }),
                tempMax: item.main.temp_max,
                tempMin: item.main.temp_min,
                icon: item.weather[0].icon,
@@ -43,11 +54,13 @@ export default function Forecast({ city }) {
              });
           } else if (seenDates.has(date)) {
              const dayObj = dailyData.find(d => d.date === date);
-             if (item.main.temp_max > dayObj.tempMax) dayObj.tempMax = item.main.temp_max;
-             if (item.main.temp_min < dayObj.tempMin) dayObj.tempMin = item.main.temp_min;
+             if (dayObj) {
+               if (item.main.temp_max > dayObj.tempMax) dayObj.tempMax = item.main.temp_max;
+               if (item.main.temp_min < dayObj.tempMin) dayObj.tempMin = item.main.temp_min;
+             }
           }
         });
-        
+
         setForecast(dailyData);
       } catch (err) {
         console.error(err);
@@ -58,10 +71,10 @@ export default function Forecast({ city }) {
     };
 
     getForecast();
-  }, [city]);
+  }, [city, lat, lon]);
 
   if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}><CircularProgress color="inherit" /></Box>;
-  if (error) return null; 
+  if (error) return null;
 
   return (
     <Box sx={{ mt: 3, width: '100%' }}>

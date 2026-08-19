@@ -1,4 +1,3 @@
-// // import { ClassNames } from "@emotion/react";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import Typography from "@mui/material/Typography";
@@ -84,7 +83,7 @@ export default function InfoBox({ info, timeDetails }) {
 
             <Box sx={{ mt: 3 }}>
               <WeatherInsights info={info} />
-              <Forecast city={info.city} />
+              <Forecast city={info.city} lat={info.lat} lon={info.lon} />
               <WeatherMap lat={info.lat} lon={info.lon} city={info.city} />
             </Box>
           </CardContent>
