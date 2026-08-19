@@ -3,76 +3,6 @@
 // import "./SearchBox.css";
 // import { useState } from 'react';
 
-// export default function SearchBox({ updateInfo }) {
-//   let [city, setCity] = useState("");
-//   let [error, setError] = useState(false);
-//   const API_URL = "https://api.openweathermap.org/data/2.5/weather";
-//   const API_KEY = "2eee08186a33bdbdabfe7bef3887f3f2";
-
-//   let getWeatherInfo = async () => {
-//     let response = await fetch(`${API_URL}?q=${city}&appid=${API_KEY}&units=metric`);
-//     let jsonResponse = await response.json();
-//     console.log(jsonResponse);
-
-//     // yahan error check
-//     if (jsonResponse.cod !== 200) {
-//       throw new Error(jsonResponse.message);
-//     }
-
-//     let result = {
-//       city: city,
-//       temp: jsonResponse.main.temp,
-//       tempMin: jsonResponse.main.temp_min,
-//       tempMax: jsonResponse.main.temp_max,
-//       humidity: jsonResponse.main.humidity,
-//       feelsLike: jsonResponse.main.feels_like,
-//       weather: jsonResponse.weather[0].description,
-//     };
-//     console.log(result);
-//     return result;
-//   };
-
-//   let handleChange = (evt) => {
-//     setCity(evt.target.value);
-//   };
-
-//   let handleSubmit = async (evt) => {
-//     evt.preventDefault();
-//     console.log(city);
-//     setCity("");
-//     try {
-//       let newInfo = await getWeatherInfo();
-//       updateInfo(newInfo);
-//       setError(false); // success pe error hatao
-//       setCity("");
-//     } catch (err) {
-//       console.error(err);
-//       setError(true);
-//     }
-//   };
-
-//   return (
-//     <div className="SearchBox">
-//       <form onSubmit={handleSubmit}>
-//         <TextField
-//           id="city"
-//           label="City Name"
-//           variant="outlined"
-//           required
-//           value={city}
-//           onChange={handleChange}
-//         />
-//         <br /><br />
-//         <br></br>
-//         <Button variant="contained" type="submit">Search</Button>
-//         {error && <p style={{ color: "red" }}>No such place exists!</p>}
-//       </form>
-//     </div>
-//   );
-// }
-
-
-
 import { useState, useEffect, useCallback } from 'react';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
@@ -94,7 +24,11 @@ export default function SearchBox({ updateInfo }) {
   let [recentSearches, setRecentSearches] = useState([]);
 
   const API_URL = "https://api.openweathermap.org/data/2.5/weather";
-  const API_KEY = "aa2cf8819475d67e138795bdba57a945"; // replace with your key
+  // Use Vite env var. Set VITE_OPENWEATHER_API_KEY in Vercel environment variables.
+  const API_KEY = import.meta.env.VITE_OPENWEATHER_API_KEY;
+  if (!API_KEY) {
+    console.warn('VITE_OPENWEATHER_API_KEY is not set. Please set it in your environment variables.');
+  }
 
   useEffect(() => {
     // Load recent searches from local storage on mount
@@ -117,7 +51,7 @@ export default function SearchBox({ updateInfo }) {
   let getWeatherInfo = async (queryType, queryData) => {
     let url = "";
     if (queryType === "city") {
-      url = `${API_URL}?q=${queryData}&appid=${API_KEY}&units=metric`;
+      url = `${API_URL}?q=${encodeURIComponent(queryData)}&appid=${API_KEY}&units=metric`;
     } else if (queryType === "coords") {
       url = `${API_URL}?lat=${queryData.lat}&lon=${queryData.lon}&appid=${API_KEY}&units=metric`;
     }
@@ -126,13 +60,26 @@ export default function SearchBox({ updateInfo }) {
     let jsonResponse = await response.json();
 
     if (jsonResponse.cod !== 200) {
-      throw new Error(jsonResponse.message);
+      throw new Error(jsonResponse.message || 'Failed to fetch weather');
+    }
+
+    // Call One Call API to get daily temps (day/eve/night)
+    const lat = jsonResponse.coord.lat;
+    const lon = jsonResponse.coord.lon;
+    let oneCallData = null;
+    try {
+      const oneCallUrl = `https://api.openweathermap.org/data/2.5/onecall?lat=${lat}&lon=${lon}&units=metric&exclude=minutely,hourly,alerts&appid=${API_KEY}`;
+      const ocRes = await fetch(oneCallUrl);
+      oneCallData = await ocRes.json();
+    } catch (e) {
+      console.warn('One Call API fetch failed', e);
+      oneCallData = null;
     }
 
     let result = {
-      city: jsonResponse.name,
-      lat: jsonResponse.coord.lat,
-      lon: jsonResponse.coord.lon,
+      city: `${jsonResponse.name}, ${jsonResponse.sys?.country || ''}`.trim().replace(/,\s*$/, ''),
+      lat: lat,
+      lon: lon,
       temp: jsonResponse.main.temp,
       tempMin: jsonResponse.main.temp_min,
       tempMax: jsonResponse.main.temp_max,
@@ -146,6 +93,10 @@ export default function SearchBox({ updateInfo }) {
       sunrise: jsonResponse.sys.sunrise,
       sunset: jsonResponse.sys.sunset,
       timezone: jsonResponse.timezone,
+      dayTemp: oneCallData ? (oneCallData.daily?.[0]?.temp?.day ?? null) : null,
+      eveningTemp: oneCallData ? (oneCallData.daily?.[0]?.temp?.eve ?? null) : null,
+      nightTemp: oneCallData ? (oneCallData.daily?.[0]?.temp?.night ?? null) : null,
+      dailyRaw: oneCallData?.daily ?? null
     };
     return result;
   };
@@ -153,7 +104,7 @@ export default function SearchBox({ updateInfo }) {
   // Debounced search function
   const debouncedSearch = useCallback(
     debounce(async (searchCity) => {
-      if (!searchCity.trim()) return;
+      if (!searchCity || !searchCity.trim()) return;
       setLoading(true);
       try {
         let newInfo = await getWeatherInfo("city", searchCity);
@@ -170,6 +121,13 @@ export default function SearchBox({ updateInfo }) {
     []
   );
 
+  // Cancel debounced calls on unmount
+  useEffect(() => {
+    return () => {
+      debouncedSearch.cancel && debouncedSearch.cancel();
+    };
+  }, [debouncedSearch]);
+
   let handleChange = (evt) => {
     setCity(evt.target.value);
     debouncedSearch(evt.target.value);
@@ -178,10 +136,10 @@ export default function SearchBox({ updateInfo }) {
   let handleSubmit = async (evt) => {
     if(evt) evt.preventDefault();
     if (!city.trim()) return;
-    
+
     // Cancel the debounced call since we are manually submitting
-    debouncedSearch.cancel();
-    
+    debouncedSearch.cancel && debouncedSearch.cancel();
+
     setLoading(true);
     try {
       let newInfo = await getWeatherInfo("city", city);
